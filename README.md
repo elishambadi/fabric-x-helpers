@@ -1,9 +1,11 @@
-# Fabric-X helpers
-This repo contains config files, yamls, READMEs and tutorials to help you setup both a development and production Fabric-X network.
+# Fabric-X Helpers
 
-The (Sample core.yaml)[./sample_fsc_core.yaml] assumes you have fabric-x-samples repo on your local machine.
+This repository contains configuration files, YAMLs, READMEs, and tutorials to help you set up both development and production Fabric-X networks.
 
-To-Do:
-[ ] Setup Devnet guides for Fabric-X.
-[ ] Setup production deployment guides for Fabric-X.
-[ ] Add sample FSC views for different use cases.
+The [sample `core.yaml`](./sample_fsc_core.yaml) assumes that you have the `fabric-x-samples` repository available on your local machine.
+
+## To Do
+
+* [ ] Add development network setup guides for Fabric-X
+* [ ] Add production deployment guides for Fabric-X
+* [ ] Add sample FSC views for different use cases
