@@ -1,0 +1,139 @@
+# core.yaml — FSC node running natively on macOS, linked to the devnet.
+#
+# Devnet endpoints (all exposed to host via port mappings):
+#   Orderer routers:   localhost:7050, :7150, :7250, :7350 (parties 1-4)
+#   Committer query:   localhost:7001
+#   Committer sidecar: localhost:4001
+# Channel: mychannel
+#
+# Identity: Uses devnet User1 (Org1 member).
+# First ensure the devnet is running: make -C ../../../fabric-x-samples/devnet start
+#
+# IMPORTANT: The channel config adds Docker-hostname orderers to the list.
+# Since you're running natively (not inside Docker), add to /etc/hosts:
+#   127.0.0.1 orderer-party1-router orderer-party2-router orderer-party3-router orderer-party4-router
+#   127.0.0.1 committer-query-service committer-sidecar
+
+fsc:
+  id: devnet-user1
+
+  identity:
+    cert:
+      file: ../../../fabric-x-samples/devnet/crypto/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/signcerts/User1@org1.example.com-cert.pem
+    key:
+      file: ../../../fabric-x-samples/devnet/crypto/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/keystore/priv_sk
+
+  p2p:
+    type: websocket
+    listenAddress: /ip4/0.0.0.0/tcp/19301
+    opts:
+      websocket:
+        tls:
+          serverRootCAs:
+            files:
+              - ../../../fabric-x-samples/devnet/crypto/peerOrganizations/org1.example.com/users/User1@org1.example.com/tls/ca.crt
+          clientRootCAs:
+            files:
+              - ../../../fabric-x-samples/devnet/crypto/peerOrganizations/org1.example.com/users/User1@org1.example.com/tls/ca.crt
+          clientAuthRequired: true
+          insecureSkipVerify: true
+
+  web:
+    enabled: true
+    address: 0.0.0.0:9301
+    tls:
+      enabled: true
+      cert:
+        file: ../../../fabric-x-samples/devnet/crypto/peerOrganizations/org1.example.com/users/User1@org1.example.com/tls/client.crt
+      key:
+        file: ../../../fabric-x-samples/devnet/crypto/peerOrganizations/org1.example.com/users/User1@org1.example.com/tls/client.key
+      clientAuthRequired: true
+      clientRootCAs:
+        files:
+          - ../../../fabric-x-samples/devnet/crypto/peerOrganizations/org1.example.com/users/User1@org1.example.com/tls/ca.crt
+
+  msp:
+    id: Org1MSP
+    type: bccsp
+    opts:
+      root_certs:
+        - ../../../fabric-x-samples/devnet/crypto/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp/cacerts/ca.org1.example.com-cert.pem
+
+  endpoint:
+    resolvers: []
+
+  persistences:
+    default:
+      type: memory
+
+  kvs:
+    cache:
+      size: 200
+
+fabric:
+  enabled: true
+  default:
+    driver: fabricx
+    default: true
+    msp_id: Org1MSP
+    msps:
+      - id: Org1MSP
+        mspType: bccsp
+        mspID: Org1MSP
+        path: ../../../fabric-x-samples/devnet/crypto/peerOrganizations/org1.example.com/users/User1@org1.example.com/msp
+    tls:
+      enabled: true
+      clientAuthRequired: true
+      clientCert:
+        file: ../../../fabric-x-samples/devnet/crypto/peerOrganizations/org1.example.com/users/User1@org1.example.com/tls/client.crt
+      clientKey:
+        file: ../../../fabric-x-samples/devnet/crypto/peerOrganizations/org1.example.com/users/User1@org1.example.com/tls/client.key
+    orderers:
+      - address: orderer-party1-router:7050
+        connectionTimeout: 5s
+        tlsRootCertFile: ../../../fabric-x-samples/devnet/crypto/ordererOrganizations/orderer-org-1/msp/tlscacerts/tlsca.orderer-org-1-cert.pem
+        tlsClientSideAuth: true
+      - address: orderer-party2-router:7150
+        connectionTimeout: 5s
+        tlsRootCertFile: ../../../fabric-x-samples/devnet/crypto/ordererOrganizations/orderer-org-2/msp/tlscacerts/tlsca.orderer-org-2-cert.pem
+        tlsClientSideAuth: true
+      - address: orderer-party3-router:7250
+        connectionTimeout: 5s
+        tlsRootCertFile: ../../../fabric-x-samples/devnet/crypto/ordererOrganizations/orderer-org-3/msp/tlscacerts/tlsca.orderer-org-3-cert.pem
+        tlsClientSideAuth: true
+      - address: orderer-party4-router:7350
+        connectionTimeout: 5s
+        tlsRootCertFile: ../../../fabric-x-samples/devnet/crypto/ordererOrganizations/orderer-org-4/msp/tlscacerts/tlsca.orderer-org-4-cert.pem
+        tlsClientSideAuth: true
+    ordering:
+      tlsEnabled: true
+      tlsClientAuthRequired: true
+    queryService:
+      requestTimeout: 30s
+      endpoints:
+        - address: "localhost:7001"
+          connectionTimeout: 5s
+          tls:
+            enabled: true
+            clientCert: ../../../fabric-x-samples/devnet/crypto/peerOrganizations/org1.example.com/users/User1@org1.example.com/tls/client.crt
+            clientKey: ../../../fabric-x-samples/devnet/crypto/peerOrganizations/org1.example.com/users/User1@org1.example.com/tls/client.key
+            rootCerts:
+              - ../../../fabric-x-samples/devnet/crypto/peerOrganizations/org1.example.com/msp/tlscacerts/tlsca.org1.example.com-cert.pem
+    notificationService:
+      requestTimeout: 30s
+      endpoints:
+        - address: "localhost:4001"
+          connectionTimeout: 5s
+          tls:
+            enabled: true
+            clientCert: ../../../fabric-x-samples/devnet/crypto/peerOrganizations/org1.example.com/users/User1@org1.example.com/tls/client.crt
+            clientKey: ../../../fabric-x-samples/devnet/crypto/peerOrganizations/org1.example.com/users/User1@org1.example.com/tls/client.key
+            rootCerts:
+              - ../../../fabric-x-samples/devnet/crypto/peerOrganizations/org1.example.com/msp/tlscacerts/tlsca.org1.example.com-cert.pem
+    channels:
+      - name: mychannel
+        default: true
+
+logging:
+  spec: fabricx-sdk=debug:info
+  format: "%{color}%{time:2006-01-02 15:04:05.000 MST} [%{module}] %{shortfunc} → %{level:.4s} %{id:03x}%{color:reset} %{message}"
