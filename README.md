@@ -4,6 +4,8 @@ This repository contains configuration files, YAMLs, READMEs, and tutorials to h
 
 The [sample `core.yaml`](./sample_fsc_core.yaml) assumes that you have the `fabric-x-samples` repository available on your local machine.
 
+The [sample `runner.go`](./sample_fabric_x_runner.go) is applied to `fabric-x-operator` repository, which you can clone to your local machine. It sets up a single-node production network automatically.
+
 ## To Do
 
 * [ ] Add development network setup guides for Fabric-X

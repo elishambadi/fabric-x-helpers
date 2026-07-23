@@ -1,0 +1,48 @@
+# Staging topology — moderate scale for integration and load testing.
+namespace: fabric-x
+caName: bootstrap-ca-staging
+storageClass: local-path
+phaseTimeout: 15m
+
+images:
+  orderer: hyperledger/fabric-x-orderer
+  ordererVersion: "1.0.0"
+  committer: hyperledger/fabric-x-committer
+  committerVersion: "1.0.0"
+
+postgres:
+  host: fabric-x-postgres-rw.fabric-x.svc.cluster.local
+  port: 5432
+  database: fabricx
+  user: fabricx
+  passwordSecretName: fabric-x-postgres-app
+  passwordSecretNamespace: fabric-x
+  maxConnections: 100
+  minConnections: 10
+  maxElapsedRetryTime: "30m"
+
+channel:
+  id: arma
+  mspID: Org1MSP
+  orgName: Org1
+
+orderer:
+  parties: 4
+  shardsPerParty: 2
+  storageSize: 5Gi
+  consenterStorageSize: 1Gi
+  batcherStorageSize: 1Gi
+  replicas:
+    router: 1
+    consenter: 1
+    assembler: 1
+    batcher: 1
+
+committer:
+  enabled: true
+  replicas:
+    coordinator: 1
+    sidecar: 1
+    validator: 2
+    verifier: 2
+    queryService: 2
