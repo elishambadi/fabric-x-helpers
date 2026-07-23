@@ -1,0 +1,79 @@
+# 200K TPS topology — multi-party, multi-shard for maximum throughput.
+#
+# Derived from benchmark: 3,228 TPS on prod topology (4 parties, 1 shard, 12 validators).
+# Scaled 62x via shard-level parallelism and validator pool expansion.
+#
+# Infrastructure:
+#   - 4 nodes, 128GB RAM each, 500GB NVMe per node
+#   - 1 party per node (each party owns all its shards' components)
+#   - Total cluster: 512GB RAM, 2TB NVMe
+#   - PostgreSQL: 3-node CNPG cluster (dedicated nodes or shared with parties)
+#   - PgBouncer: 4 instances, transaction pooling, pool_size=500
+#   - Gateway: 2 instances for high availability
+#
+# Storage breakdown (per node, ~500GB):
+#   32 assembler ×  10Gi = 320Gi
+#   32 consenter ×   5Gi = 160Gi
+#   32 batcher   ×   2Gi =  64Gi
+#                           = 544Gi (slightly over — use 3 nodes for ordering, 1 for PG)
+#
+# Scaling rationale:
+#   4 parties × 32 shards = 128 independent SmartBFT consensus channels.
+#   Each channel targets ~1,562 TPS → 128 × 1,562 ≈ 200K TPS.
+#   Validator throughput per instance ~500 TPS (with max-workers-for-committer=50)
+#   → 200K / 500 = 400 validators.
+#   PgBouncer 4 instances × 500 pool = 2,000 slots for 400 validators × 5 active conns each.
+namespace: fabric-x
+caName: bootstrap-ca-200k
+storageClass: fast-ssd
+phaseTimeout: 30m
+
+images:
+  orderer: hyperledger/fabric-x-orderer
+  ordererVersion: "1.0.0"
+  committer: hyperledger/fabric-x-committer
+  committerVersion: "1.0.0"
+
+postgres:
+  host: fabric-x-postgres-rw.fabric-x.svc.cluster.local
+  port: 6432
+  database: fabricx
+  user: fabricx
+  passwordSecretName: fabric-x-postgres-app
+  passwordSecretNamespace: fabric-x
+  # Each validator needs fewer active connections behind PgBouncer's multiplexing
+  maxConnections: 20
+  minConnections: 5
+  maxElapsedRetryTime: "1h"
+
+channel:
+  id: arma
+  mspID: Org1MSP
+  orgName: Org1
+
+orderer:
+  parties: 4
+  # Primary throughput lever: each shard runs independent SmartBFT consensus.
+  # 32 shards × ~6,250 TPS/shard theoretical = 200K TPS.
+  # Practical per-shard throughput depends on node CPU and network latency.
+  shardsPerParty: 32
+  storageSize: 10Gi
+  consenterStorageSize: 5Gi
+  batcherStorageSize: 2Gi
+  replicas:
+    router: 1
+    consenter: 1
+    assembler: 1
+    batcher: 1
+
+committer:
+  enabled: true
+  replicas:
+    coordinator: 2
+    sidecar: 4
+    # 400 validators × 500 TPS each = 200K TPS.
+    # max-workers-for-committer should be increased to 50 in committer config.
+    validator: 400
+    verifier: 400
+    # Read-only queries scale with fewer replicas; 12 handles the load.
+    queryService: 12
